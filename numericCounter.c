@@ -2,16 +2,25 @@
 #include "pico/stdlib.h"
 #include "hardware/pio.h"
 #include "hardware/uart.h"
+#include "hardware/clocks.h"
+#include "hardware/adc.h"
+#include "pico/bootrom.h"
+#include "hardware/pwm.h"
+#include "pico/bootrom.h"  //
+#include "hardware/flash.h"
+#include "hardware/structs/systick.h" 
+#include "pio_matrix.pio.h"
 
-#include "blink.pio.h"
 //definição pinos
 #define LED_RED 11
 #define LED_GREEN 12
 #define LED_BLUE 13
 #define BOTAO_A 5
 #define BOTAO_B 6
+#define BOTAO_C 22
 #define OUT_PIN 7
-#define
+#define BUZZER_A_PIN 10
+#define BUZZER_B_PIN 21
 
 //variaveis universais
 //variaveis pio
@@ -27,11 +36,35 @@ volatile _Atomic uint brilho =1; // 1 a 4
 //struc com 
 
 //callback()
+void tratar_botoes(uint gpio)
+{
+    debounce();
+    if(gpio==BOTAO_A)
+    {
+        //fazer acrecimo 
+        numero_display=(numero_display+1)%10;
+        return;
+    }else if( gpio ==BOTAO_B)
+    {
+        //fazer decrescimo
+        numero_display=(numero_display-1)%10;
+        return;
+    }else if(gpio==BOTAO_C)
+    {
+        entrarModoBootloader();
+    }
 
+}
 //acende_led()
-
+void acende_led()
+{
+    gpio_put(LED_RED, true);
+}
 //apaga_led()
-
+void apaga_led()
+{
+    gpio_put(LED_RED, false);
+}
 //gera_rgb
 uint32_t matrix_rgbFlag(double b, double r, double g)
 {
@@ -46,13 +79,43 @@ uint32_t matrix_rgbFlag(double b, double r, double g)
 }
 
 //debounce()
-
+void debounce()
+{
+    sleep_ms(50);
+}
 //atualiza_matrix
+void atualiza_matrix()
+{
 
+}
 //inicia_HARDWARE()
 void inicia_hardware()
 {
-init_pio_routine();
+    //inicializa pio
+    init_pio_routine();
+    //inicializa leds 11 
+    gpio_init(LED_RED);
+    gpio_set_dir(LED_RED, GPIO_OUT);
+    //inicializa botoes
+    //a
+    gpio_init(BOTAO_A);
+    gpio_set_dir(BOTAO_A, GPIO_IN);
+    gpio_pull_up(BOTAO_A);
+    gpio_set_irq_enabled_with_callback(BOTAO_A, GPIO_IRQ_EDGE_RISE, true, &tratar_botoes);
+    //b
+    gpio_init(BOTAO_B);
+    gpio_set_dir(BOTAO_B, GPIO_IN);
+    gpio_pull_up(BOTAO_B);
+    gpio_set_irq_enabled_with_callback(BOTAO_B, GPIO_IRQ_EDGE_RISE, true, &tratar_botoes);
+    //c
+    gpio_init(BOTAO_C);
+    gpio_set_dir(BOTAO_C, GPIO_IN);
+    gpio_pull_up(BOTAO_C);
+    gpio_set_irq_enabled_with_callback(BOTAO_C, GPIO_IRQ_EDGE_RISE, true, &tratar_botoes);
+
+    
+
+
 
 }
 void init_pio_routine()
@@ -72,42 +135,45 @@ void init_pio_routine()
     state_machine= pio_claim_unused_sm(pio_controlador, true);
     pio_matrix_program_init(pio_controlador, statte_machine, deslocamento, OUT_PIN);
 }
+void entrarModoBootloader() {
+
+    tocar_tom_buzzer(1000, 200); 
+    sleep_ms(100);              
+    tocar_tom_buzzer(1500, 200); 
+    sleep_ms(100);               
+    tocar_tom_buzzer(2000, 300);
+    sleep_ms(100);               
+    tocar_tom_buzzer(1000, 200);
+    sleep_ms(50);                
+    tocar_tom_buzzer(1500, 200); 
+    sleep_ms(50);                
+    tocar_tom_buzzer(2000, 400);
+    reset_usb_boot(0, 0); // Reinicia no modo bootloader
+}
+void tocar_tom_buzzer(uint16_t frequency, uint32_t duration_ms) {
+    gpio_set_function(BUZZER_B_PIN, GPIO_FUNC_PWM); // Configura pino do buzzer para PWM
+    uint slice_num = pwm_gpio_to_slice_num(BUZZER_B_PIN);
+
+    pwm_set_wrap(slice_num, 125000000 / frequency); // Período do PWM
+    pwm_set_gpio_level(BUZZER_B_PIN, (125000000 / frequency) / 2); // Duty cycle 50%
+    pwm_set_enabled(slice_num, true); // Ativa o PWM
+
+    sleep_ms(duration_ms); // Toca por tempo especificado
+
+    pwm_set_enabled(slice_num, false); // Desliga o PWM
+    gpio_set_function(BUZZER_B_PIN, GPIO_FUNC_SIO);
+    gpio_put(BUZZER_B_PIN, 0);
+}
 
 
 
 int main()
 {
-    stdio_init_all();
-
-    // PIO Blinking example
-    PIO pio = pio0;
-    uint offset = pio_add_program(pio, &blink_program);
-    printf("Loaded program at %d\n", offset);
-    
-    #ifdef PICO_DEFAULT_LED_PIN
-    blink_pin_forever(pio, 0, offset, PICO_DEFAULT_LED_PIN, 3);
-    #else
-    blink_pin_forever(pio, 0, offset, 6, 3);
-    #endif
-    // For more pio examples see https://github.com/raspberrypi/pico-examples/tree/master/pio
-
-    // Set up our UART
-    uart_init(UART_ID, BAUD_RATE);
-    // Set the TX and RX pins by using the function select on the GPIO
-    // Set datasheet for more information on function select
-    gpio_set_function(UART_TX_PIN, GPIO_FUNC_UART);
-    gpio_set_function(UART_RX_PIN, GPIO_FUNC_UART);
-    
-    // Use some the various UART functions to send out data
-    // In a default system, printf will also output via the def
-    
-    // Send out a string, with CR/LF conversions
-    uart_puts(UART_ID, " Hello, UART!\n");
-    
-    // For more examples of UART use see https://github.com/raspberrypi/pico-examples/tree/master/uart
-
+    inicia_hardware();
+  
     while (true) {
-        printf("Hello, world!\n");
-        sleep_ms(1000);
+        acende_led();
+        sleep_ms(150);
+        apaga_led();
     }
 }

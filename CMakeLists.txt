@@ -44,7 +44,7 @@ pico_set_program_version(numericCounter "0.1")
 pico_generate_pio_header(numericCounter ${CMAKE_CURRENT_LIST_DIR}/blink.pio)
 
 # Modify the below lines to enable/disable output over UART/USB
-pico_enable_stdio_uart(numericCounter 1)
+pico_enable_stdio_uart(numericCounter 0)
 pico_enable_stdio_usb(numericCounter 1)
 
 # Add the standard library to the build
@@ -58,8 +58,13 @@ target_include_directories(numericCounter PRIVATE
 
 # Add any user requested libraries
 target_link_libraries(numericCounter 
-        hardware_pio
-        
+            pico_stdlib
+            hardware_pwm
+            hardware_pio
+            hardware_adc
+            pico_bootrom
+            hardware_flash
+            hardware_clocks
         )
 
 pico_add_extra_outputs(numericCounter)
