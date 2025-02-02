@@ -1,0 +1,1 @@
+//prototipos funções e arrays
