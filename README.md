@@ -37,7 +37,15 @@ O contador numérico vai de 9 a 0 em um loop contínuo, com alternância de core
    - **Modo Bootloader:** O uso do **Pino 22** para reiniciar a placa no modo bootloader é uma funcionalidade adicional que facilita o processo de reprogramação do dispositivo. Ao pressionar esse botão, a placa reinicia e entra no modo de carregamento de firmware via USB.
    - **Efeito Mosaico nos LEDs:** A alternância das cores no array de LEDs foi implementada de forma a criar um "mosaico visual", onde as cores não apenas indicam o número atual, mas também geram um padrão interessante.
 
+### Licença
 
+Este projeto está licenciado sob a **Licença GNU**.
+
+---
+
+<div align="center">
+    GNUs not Unix
+</div>
 
 ## Dependências
 
@@ -51,7 +59,7 @@ Para compilar e executar este projeto, você precisará das seguintes ferramenta
 
 Para compilar o código, siga os passos abaixo:
 
-1. Instale o SDK do **PICO** e configure o ambiente de desenvolvimento com CMake.
+1. Instale o SDK do **RP2040** e configure o ambiente de desenvolvimento com CMake.
 2. Baixe ou clone o repositório para o seu diretório de trabalho.
 3. Use o comando `cmake` para gerar os arquivos de build:
 
@@ -66,15 +74,15 @@ Para compilar o código, siga os passos abaixo:
 
 5. Acesse o dispositivo no seu computador e carregue o código compilado.
 
-### Contato
+### Demonstração
+
+Veja uma demonstração em vídeo do funcionamento do sistema no YouTube:
+
+[**Assista à Demonstração no YouTube**](https://www.youtube.com/live/yuEm7UC6tqE)
 
 - **Aluno:** Gleison Fonseca de Paula
 
-
 ---
-### Licença
-
-Este projeto está licenciado sob a **Licença GNU**.
 
 <div align="center">
     GNUs not Unix
