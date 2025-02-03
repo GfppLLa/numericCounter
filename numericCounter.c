@@ -51,14 +51,14 @@ uint state_machine =0;
 volatile _Atomic uint numero_display=0;
 volatile _Atomic uint cor_atual =1;//apenas 1, 2 e 3 
 volatile _Atomic uint brilho =1; // 1 a 4
-volatile _Atomic uint tempo =50; // 1 a 4
+volatile _Atomic uint tempo =5; // 1 a 4
 volatile uint32_t hora_presente;
 volatile _Atomic uint var_teste=0;
 volatile _Atomic uint saida_teste=0;
 volatile _Atomic uint sobe_um=0;
 volatile _Atomic uint desce_um=0;
 int randon=0;
-static int randonTwo=0;
+static bool randonTwo=0;
 
 //objetivo nao muito claro
 static volatile uint32_t ultimo_pressionamento = 0;
@@ -74,7 +74,7 @@ void tratar_botoes(uint gpio, uint32_t events)
       hora_presente = to_us_since_boot(get_absolute_time());
     if(gpio==BOTAO_A)
     {
-        if(hora_presente-ultimo_pressionamento>DEBOUNCING_TIME_US)
+        if(hora_presente-ultimo_pressionamento>DEBOUNCING_TIME_US*1000)
         {
             bool botao_pressionado=!gpio_get(BOTAO_A);
             if(botao_pressionado){
@@ -86,7 +86,7 @@ void tratar_botoes(uint gpio, uint32_t events)
 
     } else if( gpio ==BOTAO_B)
     {
-         if(hora_presente-ultimo_pressionamento>DEBOUNCING_TIME_US)
+         if(hora_presente-ultimo_pressionamento>DEBOUNCING_TIME_US*1000)
         {
             bool botao_pressionado=!gpio_get(BOTAO_B);
             if(botao_pressionado){
@@ -100,7 +100,7 @@ void tratar_botoes(uint gpio, uint32_t events)
     
     } else if(gpio==BOTAO_C)
     {
-        if(hora_presente-ultimo_pressionamento>DEBOUNCING_TIME_US)
+        if(hora_presente-ultimo_pressionamento>DEBOUNCING_TIME_US*1000)
         {
             bool botao_pressionado=!gpio_get(BOTAO_C);
             if(botao_pressionado)
@@ -148,7 +148,14 @@ if(randon>=1&&randon<=3){
     } else if (randon == 3) { // Azul
         B = (unsigned char)(number *brilhoLeds*  255.0); // B é o máximo, R e G são 0
     }
-}else if(randon==4 || randonTwo==1)//se or and for 4 o led fica branco
+}else if(randon==4)//se or and for 4 o led fica branco
+{
+        R = (unsigned char)(number *brilhoLeds* 255.0); // R é o máximo, G e B são 0
+        G = (unsigned char)(number *brilhoLeds*  255.0); // G é o máximo, R e B são 0
+        B = (unsigned char)(number *brilhoLeds*  255.0); // B é o máximo, R e G são 0
+    
+}
+if( randonTwo==true)//se or and for 4 o led fica branco
 {
         R = (unsigned char)(number *brilhoLeds* 255.0); // R é o máximo, G e B são 0
         G = (unsigned char)(number *brilhoLeds*  255.0); // G é o máximo, R e B são 0
@@ -300,21 +307,23 @@ void desliga_tudo()
 }
 void operaDisplay()
 {
-if (sobe_um) {  // Se sobe_um for 1
-        if (numero_display < 9) {
-            numero_display++;
-        }
-        sobe_um = 0;  // Reseta a variável após uso
+
+    if (sobe_um == 1)
+    {
+        numero_display = (numero_display + 1) % 10;
+        sobe_um = 0;
+        return;
     }
 
-    if (desce_um) {  // Se desce_um for 1
-        if (numero_display > 0) {
-            numero_display--;
-        }
-        desce_um = 0;  // Reseta a variável após uso
+    if (desce_um == 1)
+    {
+       
+        numero_display = (numero_display - 1 + 10) % 10;
+        desce_um = 0;
+        return;
     }
-
 }
+
 
 
 int main()
@@ -331,7 +340,7 @@ int main()
     while (true) {
         if(saida_teste==1)
         {
-            randonTwo=1;
+            randonTwo=true;
             desliga_tudo();
             sleep_ms(50);
             
