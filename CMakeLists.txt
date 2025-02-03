@@ -28,6 +28,7 @@ set(PICO_BOARD pico_w CACHE STRING "Board type")
 # Pull in Raspberry Pi Pico SDK (must be before project)
 include(pico_sdk_import.cmake)
 
+
 project(numericCounter C CXX ASM)
 
 # Initialise the Raspberry Pi Pico SDK
@@ -35,14 +36,17 @@ pico_sdk_init()
 
 # Add executable. Default name is the project name, version 0.1
 
-add_executable(numericCounter numericCounter.c )
+add_executable(numericCounter 
+                numericCounter.c 
+                include/numbers_n_array.c
+                )
 
 pico_set_program_name(numericCounter "numericCounter")
 pico_set_program_version(numericCounter "0.1")
 
 # Generate PIO header
 pico_generate_pio_header(numericCounter ${CMAKE_CURRENT_LIST_DIR}/blink.pio)
-
+pico_generate_pio_header(numericCounter ${CMAKE_CURRENT_LIST_DIR}/pio_matrix.pio)
 # Modify the below lines to enable/disable output over UART/USB
 pico_enable_stdio_uart(numericCounter 0)
 pico_enable_stdio_usb(numericCounter 1)
@@ -65,7 +69,12 @@ target_link_libraries(numericCounter
             pico_bootrom
             hardware_flash
             hardware_clocks
+            hardware_structs
         )
+target_include_directories(numericCounter PRIVATE
+    ${CMAKE_CURRENT_LIST_DIR}
+    ${CMAKE_CURRENT_LIST_DIR}/include
+)
 
 pico_add_extra_outputs(numericCounter)
 
